@@ -21,4 +21,6 @@ func ServerHandler(w http.ResponseWriter, r *http.Request) {
 		//if err:= templates["index"].Execute(w, "hello"); err != nil{
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+func EditServerHandler(w http.ResponseWriter, r *http.Request) {
+
 }
