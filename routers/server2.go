@@ -1,18 +1,18 @@
 package routers
 
 import (
-	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"panel/config"
 	"strconv"
 	"strings"
-	"net/url"
 )
+
 
 //Server will have two methods, to add a new server, and to get all servers
 	type Server interface {
@@ -29,13 +29,11 @@ import (
 	//Create global `server` variable
 	var server Server
 
-func (server *dbServer) CreateServer(server *Server)  error {
+func (server *dbServer) CreateServer(id *Server)  error {
 	// 'Server' is a struct which has "hostname", "ip", and "version" attributes.
 	// Type SQL query to insert new server into our database.
 	// Note: `serverinfo` is the name of the table within our `serverDatabase` postgresql database.
-	_, err := server.db.Query(
-		"INSERT INTO serverinfo(hostname, ip, version) VALUES ($1,$2,$3)"
-		server.Hostname, server.ip, server.Version)
+	_, err := server.db.Query("INSERT INTO serverinfo(hostname, ip, version) VALUES ($1,$2,$3)", server.Hostname, server.ip, server.Version)
 	return err
 }
 
@@ -81,15 +79,13 @@ func ServerHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
+	if err := config.Servertpl.Execute(w, nil); err != nil {
+		//if err:= templates["index"].ExecrverError)ute(w, "hello"); err != nil{
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	// Write JSON list of servers to response
 	w.Write(serverListBytes)
 }
-	if err := config.Servertpl.Execute(w, nil); err != nil {
-		//if err:= templates["index"].Execute(w, "hello"); err != nil{
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-}
 
 func createServerHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse the HTML form data received in the request
@@ -102,24 +98,24 @@ func createServerHandler(w http.ResponseWriter, r *http.Request) {
 
 // Extract the field information about the person from the form info
 	server := Server{}
-	server.Hostname := r.Form.Get("hostname")
-	server.IP := r.Form.Get("ip")
-	server.version := r.Form.Get("version")
-	server.Host := r.Form.Get("host")
+	server.Hostname = r.Form.Get("hostname")
+	server.IP = r.Form.Get("ip")
+	server.version = r.Form.Get("version")
+	server.Host = r.Form.Get("host")
 // Write new person details into postgresql database using our `store` interface variable's
 // `func (*dbstore) CreatePerson` pointer receiver method defined in `store.go` file
 	err = server.CreatePerson(&server)
 	if err != nil {
 	fmt.Println(err)
 }
-
+//Setup json data to send to the host of the vm
 	endpoint := server.Host
 	data := url.Values{}
 	data.Set("Hostname", server.Hostname)
 	data.Set("IP", server.IP)
 	data.Set("Version", server.version)
 	client := &http.Client{}
-	r, err := http.NewRequest("POST", endpoint, strings.NewReader(data.Encode())) // URL-encoded payload
+	r, err = http.NewRequest("POST", endpoint, strings.NewReader(data.Encode())) // URL-encoded payload
 	if err != nil {
 		log.Fatal(err)
 	}
