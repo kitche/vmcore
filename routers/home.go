@@ -1,25 +1,21 @@
 package routers
 
 import (
+	"github.com/kitche/site/models"
+	"log"
 	"net/http"
-	"panel/config"
+	"github.com/kitche/site/config"
 )
-//var templates map[string]*template.Template
 
-func init() {
-	config.LoadTemplates()
-}
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	// We can obtain the session token from the requests cookies, which come with every request
-	//	c, err := r.Cookie("session_token")
-	//	if err != nil {
-	//		if err == http.ErrNoCookie {
-	// If the cookie is not set, return an unauthorized status
-	//			w.WriteHeader(http.StatusUnauthorized)
-	//			return
-	//		}
-	if err := config.Hometpl.Execute(w, nil); err != nil {
-		//if err:= templates["index"].Execute(w, "hello"); err != nil{
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+func HomeHandler(env *config.Env) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		bks, err := models.AllServers(env.DB)
+
+		if err = config.Hometpl.Execute(w, bks); err != nil {
+			//if err:= templates["index"].Execute(w, "hello"); err != nil{
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			log.Println(err)
+		}
+		}
 	}
-}
